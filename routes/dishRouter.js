@@ -76,7 +76,7 @@ dishRouter.route('/:dishId')
     .post((req, res, next) => {
         /**Doesn't makes sense do post at Id */
         res.statusCode = 403;
-        res.end(`PUT operation not supported on /:dishes ${req.params.dishId}`)
+        res.end(`POST operation not supported on /:dishes ${req.params.dishId}`)
     })
 
     .put((req, res, next) => {
@@ -101,6 +101,218 @@ dishRouter.route('/:dishId')
                 res.statusCode = 200 /**Inform a http request that it`s all ok */
                 res.setHeader(`Content-type`, `application/json`) /**The type of the object */
                 res.json(resp) /**Returning into Json */
+            }, (err) => next(err))
+            .catch((err) => next(err))
+    })
+
+/**For the comments into each dishId */
+dishRouter.route('/:dishId/comments')
+    .get((req, res, next) => {
+        /**Using the mongoose methods */
+        Dishes.findById(req.params.dishId)
+            .then((dish) => {
+                /**If the dish exists */
+                if (dish) {
+                    res.statusCode = 200 /**Inform a http request that it`s all ok */
+                    res.setHeader(`Content-type`, `application/json`) /**The type of the object */
+                    res.json(dish.comments) /**Returning into Json */
+                    /**These lines about error it works like this:
+                     * if you get an error, this error going to the catch and this error going to be
+                     * send to all application to informs that u got an error, an it will going to 
+                     * now allow to the application to peform the remainder of the application
+                     */
+                } else {
+                    /**If the dish doesn't exists */
+                    err = new Error(`Dish ${req.params.dishId} not found`)
+                    err.status = 404
+                    /*This return goes to app.js to return into the render error page to informe that
+                    you got an error with the dish */
+                    return next(err)
+                }
+            }, (err) => next(err))
+            .catch((err) => next(err))
+    })
+    .post((req, res, next) => {
+        /**Extract an information from body */
+        /**Using the mongoose methods */
+        Dishes.findById(req.params.dishId)
+            .then((dish) => {
+                /**If the dish exists */
+                if (dish) {
+                    /**Push the information to the body of the object */
+                    dish.comments.push(req.body)
+                    /**Saving the comment */
+                    dish.save()
+                        /**And the after save, we return the updated dish to user  */
+                        .then((dish) => {
+                            res.statusCode = 200
+                            res.setHeader('Content-Type', 'application/json')
+                            res.json(dish)
+                        }, (err) => next(err))
+
+                } else {
+                    /**If the dish doesn't exists */
+                    err = new Error(`Dish ${req.params.dishId} not found`)
+                    err.status = 404
+                    /*This return goes to app.js to return into the render error page to informe that
+                    you got an error with the dish */
+                    return next(err)
+                }
+            }, (err) => next(err))
+            .catch((err) => next(err))
+    })
+    .put((req, res, next) => {
+        /**403 is a code for forbidden method http */
+        res.statusCode = 403;
+        res.end(`PUT operation not supported on /dishes/${req.params.dishId}/comments`)
+    })
+    .delete((req, res, next) => {
+        /**Deleting all dishes */
+        Dishes.findById(req.params.dishId)
+            .then((dish) => {
+                /**If the dish exists */
+                if (dish) {
+                    /**Do a for to delete each comment one by one looking into array of comments*/
+                    for (var i = (dish.comments.length - 1); i >= 0; i--) {
+                        dish.comments.id(dish.comments[i]._id).remove()
+                    }
+                    /**Saving the deleted */
+                    dish.save()
+                        /**And the after save, we return the updated dish to user  */
+                        .then((dish) => {
+                            res.statusCode = 200
+                            res.setHeader('Content-Type', 'application/json')
+                            res.json(dish)
+                        }, (err) => next(err))
+                } else {
+                    /**If the dish doesn't exists */
+                    err = new Error(`Dish ${req.params.dishId} not found`)
+                    err.status = 404
+                    /*This return goes to app.js to return into the render error page to informe that
+                    you got an error with the dish */
+                    return next(err)
+                }
+            }, (err) => next(err))
+            .catch((err) => next(err))
+    })
+
+/**For each Comment
+ * CommentID */
+dishRouter.route('/:dishId/comments/:commentId')
+    .get((req, res, next) => {
+        /**Generating a response with JSON */
+        Dishes.findById(req.params.dishId)
+            .then((dish) => {
+                /**Check if the dish exists and the comment isn't null */
+                if (dish != null && dish.comments.id(req.params.commentId) != null) {
+                    res.statusCode = 200 /**Inform a http request that it`s all ok */
+                    res.setHeader(`Content-type`, `application/json`) /**The type of the object */
+                    res.json(dish.comments.id(req.params.commentId)) /**Returning into Json */
+                    /**These lines about error it works like this:
+                     * if you get an error, this error going to the catch and this error going to be
+                     * send to all application to informs that u got an error, an it will going to 
+                     * now allow to the application to peform the remainder of the application
+                     */
+                } else if (!dish) {
+                    /**If the dish doesn't exists */
+                    err = new Error(`Dish ${req.params.dishId} not found`)
+                    err.status = 404
+                    /*This return goes to app.js to return into the render error page to informe that
+                    you got an error with the dish */
+                    return next(err)
+                } else {
+                    /**If the comment doesn't exists */
+                    err = new Error(`Comment ${req.params.commentId} not found`)
+                    err.status = 404
+                    /*This return goes to app.js to return into the render error page to informe that
+                    you got an error with the dish */
+                    return next(err)
+                }
+            }, (err) => next(err))
+            .catch((err) => next(err))
+    })
+
+    .post((req, res, next) => {
+        /**Doesn't makes sense do post at Id */
+        res.statusCode = 403;
+        res.end(`POST operation not supported on /dishes/${req.params.dishId}/comments/${req.params.commentId}`)
+    })
+
+    .put((req, res, next) => {
+        /**Updating a specify dish with dishId */
+        /**Generating a response with JSON */
+        Dishes.findById(req.params.dishId)
+            .then((dish) => {
+                /**Check if the dish exists and the comment isn't null */
+                if (dish != null && dish.comments.id(req.params.commentId) != null) {
+                    /**Updating a rating */
+                    if (req.body.rating) {
+                        dish.comments.id(req.params.commentId).rating = req.body.rating
+                    }
+                    /**Updating comment */
+                    if (req.body.comment) {
+                        dish.comments.id(req.params.commentId).comment = req.body.comment
+                    }
+
+                    /**Saving the comment */
+                    dish.save()
+                        /**And the after save, we return the updated dish to user  */
+                        .then((dish) => {
+                            res.statusCode = 200
+                            res.setHeader('Content-Type', 'application/json')
+                            res.json(dish)
+                        }, (err) => next(err))
+                } else if (!dish) {
+                    /**If the dish doesn't exists */
+                    err = new Error(`Dish ${req.params.dishId} not found`)
+                    err.status = 404
+                    /*This return goes to app.js to return into the render error page to informe that
+                    you got an error with the dish */
+                    return next(err)
+                } else {
+                    /**If the comment doesn't exists */
+                    err = new Error(`Comment ${req.params.commentId} not found`)
+                    err.status = 404
+                    /*This return goes to app.js to return into the render error page to informe that
+                    you got an error with the dish */
+                    return next(err)
+                }
+            }, (err) => next(err))
+            .catch((err) => next(err))
+    })
+
+    .delete((req, res, next) => {
+        /**Deleting a specifique comment */
+        Dishes.findById(req.params.dishId)
+            .then((dish) => {
+                /**If the dish exists */
+                if (dish != null && dish.comments.id(req.params.commentId) != null) {
+                    /**Do a for to delete a specifique comment*/
+                    dish.comments.id(req.params.commentId).remove()
+
+                    /**Saving the deleted */
+                    dish.save()
+                        /**And the after save, we return the updated dish to user  */
+                        .then((dish) => {
+                            res.statusCode = 200
+                            res.setHeader('Content-Type', 'application/json')
+                            res.json(dish)
+                        }, (err) => next(err))
+                } else if (!dish) {
+                    /**If the dish doesn't exists */
+                    err = new Error(`Dish ${req.params.dishId} not found`)
+                    err.status = 404
+                    /*This return goes to app.js to return into the render error page to informe that
+                    you got an error with the dish */
+                    return next(err)
+                } else {
+                    /**If the comment doesn't exists */
+                    err = new Error(`Comment ${req.params.commentId} not found`)
+                    err.status = 404
+                    /*This return goes to app.js to return into the render error page to informe that
+                    you got an error with the dish */
+                    return next(err)
+                }
             }, (err) => next(err))
             .catch((err) => next(err))
     })
