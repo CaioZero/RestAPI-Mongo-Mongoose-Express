@@ -15,8 +15,10 @@ var leaderRouter = require('./routes/leaderRouter')
 /**Importing mongoose module */
 const mongoose = require('mongoose');
 
-/**Import model of dishes */
+/**Import model of dishes, promotions and leaders */
 const Dishes = require(`./models/dishes`)
+const Promo = require('./models/promo')
+const Leader = require('./models/leader')
 
 /**Setting the connection */
 const port = 27017
