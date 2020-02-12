@@ -38,8 +38,6 @@ connect.then((db) => {
   console.log(err)
 })
 
-
-
 var app = express()
 
 // view engine setup
@@ -52,6 +50,37 @@ app.use(express.urlencoded({
   extended: false
 }))
 app.use(cookieParser())
+
+/**Putting a client firt need authorization to do something */
+function auth (req, res, next) {
+  console.log(req.headers);
+  var authHeader = req.headers.authorization;
+  /**If authHeader does not exists (the user it's not logged) */
+  if (!authHeader) {
+      var err = new Error('You are not authenticated!');
+      res.setHeader('WWW-Authenticate', 'Basic');
+      err.status = 401;
+      next(err);
+      return;
+  }
+  /**This var will receive two strings, separated by a collon, that will extract the user and the password */
+  var auth = new Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
+  var user = auth[0];
+  var pass = auth[1];
+  if (user == 'admin' && pass == 'password') {
+    /**This next means that if this conditional it's true, the request will passed on the next set of middleware*/
+      next(); // authorized
+  } else {
+      var err = new Error('You are not authenticated!');
+      res.setHeader('WWW-Authenticate', 'Basic');      
+      err.status = 401;
+      next(err);
+  }
+}
+
+app.use(auth);
+
+/**Need to add an authentication badge to the client only acess before a login */
 app.use(express.static(path.join(__dirname, 'public')))
 
 app.use('/', indexRouter)
