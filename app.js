@@ -9,6 +9,9 @@ var cookieParser = require('cookie-parser')
 /**Morgan it's for logger that appers into cmd */
 var logger = require('morgan')
 
+var session = require('express-session')
+var FileStore = require('session-file-store')(session)
+
 var indexRouter = require('./routes/index')
 var usersRouter = require('./routes/users')
 var dishRouter = require('./routes/dishRouter')
@@ -54,16 +57,26 @@ app.use(express.urlencoded({
 }))
 
 /**Using secret key to parser a cookie */
-app.use(cookieParser(`12345-67890-09876-54321`))
+//app.use(cookieParser(`12345-67890-09876-54321`))
+
+/**Session created for cookies */
+app.use(session({
+  name:'session-id',
+  secret: '12345-67890-09876-54321',
+  saveUninitialized: false,
+  resave: false,
+  store: new FileStore()
+
+}))
 
 /**Putting a client firt need authorization to do something */
 function auth(req, res, next) {
-  console.log(req.signedCookies)
+  console.log(req.session)
 
   /**This conditional means that if the user does not have a signedCookie, in other way,
    * he does not have permission to login or property on it
    */
-  if (!req.signedCookies.user) {
+  if (!req.session.user) {
     /**So we look for the authorization */
     var authHeader = req.headers.authorization
 
@@ -81,9 +94,7 @@ function auth(req, res, next) {
     var pass = auth[1]
     if (user == 'admin' && pass == 'password') {
       /**If the  user and the password it's correct, so the user receives a signed cookie*/
-      res.cookie('user', 'admin', {
-        signed: true
-      })
+      req.session.user ='admin'
       /**This next means that if this conditional it's true, the request will passed on the next set of middleware*/
       next(); // authorized
     } else {
@@ -95,7 +106,7 @@ function auth(req, res, next) {
   }
   /**If the user already have a signed cookie,if its valid and if contais the user property */
   else {
-    if (req.signedCookies.user === 'admin') next()
+    if (req.session.user === 'admin') next()
     else {
       var err = new Error('You are not authenticated!')
       res.setHeader('WWW-Authenticate', 'Basic')
