@@ -61,7 +61,7 @@ app.use(express.urlencoded({
 
 /**Session created for cookies */
 app.use(session({
-  name:'session-id',
+  name: 'session-id',
   secret: '12345-67890-09876-54321',
   saveUninitialized: false,
   resave: false,
@@ -69,52 +69,35 @@ app.use(session({
 
 }))
 
+app.use('/', indexRouter)
+app.use('/users', usersRouter)
+
 /**Putting a client firt need authorization to do something */
 function auth(req, res, next) {
   console.log(req.session)
 
   /**This conditional means that if the user does not have a signedCookie, in other way,
-   * he does not have permission to login or property on it
-   */
+   * he does not have permission to login or property on it*/
   if (!req.session.user) {
     /**So we look for the authorization */
-    var authHeader = req.headers.authorization
-
     /**If authHeader does not exists (the user it's not logged) */
-    if (!authHeader) {
-      var err = new Error('You are not authenticated!')
-      res.setHeader('WWW-Authenticate', 'Basic')
-      err.status = 401
-      next(err)
-      return
-    }
-    /**This var will receive two strings, separated by a collon, that will extract the user and the password */
-    var auth = new Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':')
-    var user = auth[0]
-    var pass = auth[1]
-    if (user == 'admin' && pass == 'password') {
-      /**If the  user and the password it's correct, so the user receives a signed cookie*/
-      req.session.user ='admin'
-      /**This next means that if this conditional it's true, the request will passed on the next set of middleware*/
-      next(); // authorized
-    } else {
-      var err = new Error('You are not authenticated!')
-      res.setHeader('WWW-Authenticate', 'Basic')
-      err.status = 401
-      next(err)
-    }
+    var err = new Error('You are not authenticated!')
+    res.setHeader('WWW-Authenticate', 'Basic')
+    err.status = 401
+    next(err)
+    return
   }
   /**If the user already have a signed cookie,if its valid and if contais the user property */
   else {
-    if (req.session.user === 'admin') next()
-    else {
+    /**the string Authenticated it's from the users.js */
+    if (req.session.user === 'authenticated') {
+      next()
+    } else {
       var err = new Error('You are not authenticated!')
-      res.setHeader('WWW-Authenticate', 'Basic')
-      err.status = 401
+      err.status = 403
       return next(err)
     }
   }
-
 }
 
 app.use(auth);
@@ -122,8 +105,6 @@ app.use(auth);
 /**Need to add an authentication badge to the client only acess before a login */
 app.use(express.static(path.join(__dirname, 'public')))
 
-app.use('/', indexRouter)
-app.use('/users', usersRouter)
 app.use('/dishes', dishRouter)
 app.use('/promotions', promoRouter)
 app.use('/leaders', leaderRouter)
