@@ -1,7 +1,7 @@
 const express = require('express')
 const bodyParser = require('body-parser')
 const mongoose = require('mongoose')
-
+const authenticate = require('../authenticate')
 const Leader = require('../models/leader')
 
 const leaderRouter = express.Router()
@@ -30,7 +30,7 @@ leaderRouter.route('/')
             }, (err) => next(err))
             .catch((err) => next(err))
     })
-    .post((req, res, next) => {
+    .post(authenticate.verifyUser,(req, res, next) => {
         /**Extract an information from body */
         Leader.create(req.body)
             .then((leader) => {
@@ -41,12 +41,12 @@ leaderRouter.route('/')
             }, (err) => next(err))
             .catch((err) => next(err))
     })
-    .put((req, res, next) => {
+    .put(authenticate.verifyUser,(req, res, next) => {
         /**403 is a code for forbidden method http */
         res.statusCode = 403;
         res.end(`PUT operation not supported on /leaders`)
     })
-    .delete((req, res, next) => {
+    .delete(authenticate.verifyUser,(req, res, next) => {
         /**Deleting all leaders*/
         Leader.remove({})
             .then((resp) => {
@@ -71,13 +71,13 @@ leaderRouter.route('/:leaderId')
             .catch((err) => next(err))
     })
 
-    .post((req, res, next) => {
+    .post(authenticate.verifyUser,(req, res, next) => {
         /**Doesn't makes sense do post at Id */
         res.statusCode = 403;
         res.end(`POST operation not supported on /:leader ${req.params.dishId}`)
     })
 
-    .put((req, res, next) => {
+    .put(authenticate.verifyUser,(req, res, next) => {
         /**Updating a specify dish with dishId */
         Leader.findByIdAndUpdate(req.params.leaderId, {
                 $set: req.body
@@ -92,7 +92,7 @@ leaderRouter.route('/:leaderId')
             .catch((err) => next(err))
     })
 
-    .delete((req, res, next) => {
+    .delete(authenticate.verifyUser,(req, res, next) => {
         /**Deleting an specifique dish */
         Leader.findByIdAndRemove(req.params.leaderId)
             .then((resp) => {

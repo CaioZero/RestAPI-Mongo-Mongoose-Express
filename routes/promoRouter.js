@@ -3,6 +3,7 @@ const bodyParser = require('body-parser')
 
 const Promo = require(`../models/promo`)
 
+const authenticate = require('../authenticate')
 const promoRouter = express.Router()
 promoRouter.use(bodyParser.json())
 
@@ -29,7 +30,7 @@ promoRouter.route('/')
             }, (err) => next(err))
             .catch((err) => next(err))
     })
-    .post((req, res, next) => {
+    .post(authenticate.verifyUser,(req, res, next) => {
         /**Extract an information from body */
         Promo.create(req.body)
             .then((promo) => {
@@ -40,12 +41,12 @@ promoRouter.route('/')
             }, (err) => next(err))
             .catch((err) => next(err))
     })
-    .put((req, res, next) => {
+    .put(authenticate.verifyUser,(req, res, next) => {
         /**403 is a code for forbidden method http */
         res.statusCode = 403;
         res.end(`PUT operation not supported on /promotions`)
     })
-    .delete((req, res, next) => {
+    .delete(authenticate.verifyUser,(req, res, next) => {
         /**Deleting all promotions */
         Promo.remove({})
             .then((resp) => {
@@ -68,12 +69,12 @@ promoRouter.route('/:promoId')
             }, (err) => next(err))
             .catch((err) => next(err))
     })
-    .post((req, res, next) => {
+    .post(authenticate.verifyUser,(req, res, next) => {
         /**Doesn't makes sense do post at Id */
         res.statusCode = 403;
         res.end(`Post operation not supported on /promotions/` + req.params.promoId)
     })
-    .put((req, res, next) => {
+    .put(authenticate.verifyUser,(req, res, next) => {
         /**Updating a specify promotion with promoId */
         Promo.findByIdAndUpdate(req.params.promoId, {
                 $set: req.body
@@ -87,7 +88,7 @@ promoRouter.route('/:promoId')
             }, (err) => next(err))
             .catch((err) => next(err))
     })
-    .delete((req, res, next) => {
+    .delete(authenticate.verifyUser,(req, res, next) => {
         /**Deleting an specifique dish */
         Promo.findByIdAndRemove(req.params.promoId)
             .then((resp) => {
