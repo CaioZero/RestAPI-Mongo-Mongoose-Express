@@ -12,6 +12,9 @@ var logger = require('morgan')
 var session = require('express-session')
 var FileStore = require('session-file-store')(session)
 
+var passport = require('passport')
+var authenticate = require('./authenticate')
+
 var indexRouter = require('./routes/index')
 var usersRouter = require('./routes/users')
 var dishRouter = require('./routes/dishRouter')
@@ -69,34 +72,27 @@ app.use(session({
 
 }))
 
+/**to log in with passport */
+app.use(passport.initialize())
+app.use(passport.session())
+
 app.use('/', indexRouter)
 app.use('/users', usersRouter)
 
 /**Putting a client firt need authorization to do something */
 function auth(req, res, next) {
-  console.log(req.session)
-
   /**This conditional means that if the user does not have a signedCookie, in other way,
    * he does not have permission to login or property on it*/
-  if (!req.session.user) {
+  if (!req.user) {
     /**So we look for the authorization */
     /**If authHeader does not exists (the user it's not logged) */
     var err = new Error('You are not authenticated!')
-    res.setHeader('WWW-Authenticate', 'Basic')
-    err.status = 401
-    next(err)
-    return
+    err.status = 403
+    return next(err)
   }
   /**If the user already have a signed cookie,if its valid and if contais the user property */
   else {
-    /**the string Authenticated it's from the users.js */
-    if (req.session.user === 'authenticated') {
-      next()
-    } else {
-      var err = new Error('You are not authenticated!')
-      err.status = 403
-      return next(err)
-    }
+    next()
   }
 }
 

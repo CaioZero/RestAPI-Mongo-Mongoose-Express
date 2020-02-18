@@ -17,6 +17,9 @@
     "mongoose-currency": "^0.2.0",
     "morgan": "~1.9.1",
     "nodemon": "^2.0.2",
+    "passport": "^0.4.1",
+    "passport-local": "^1.0.0",
+    "passport-local-mongoose": "^6.0.1",
     "session-file-store": "^1.4.0"
   }
 }
